@@ -75,11 +75,24 @@ def gen_tol_temperature(data, M):
     return np.concatenate([np.random.normal(0, 1.5, N), np.random.normal(0, 0.4, M - N)])
 
 
-def limits(data):
+def limits(data, p, M):
     import copy
+
+    q = int(M * p)
+    r = (M - q) / 2
+
     aux_data = copy.deepcopy(data)
     aux_data.sort()
-    return aux_data[int(len(aux_data) * 0.025 - 1)], aux_data[int(len(aux_data) * 0.975 - 1)]
+
+    r_inf = 1
+    for w in range(M - q):
+        if (aux_data[w + q] - aux_data[w] <= aux_data[r_inf + q] - aux_data[r_inf]):
+            r_inf = w
+
+    lim_sup = aux_data[r_inf]
+    lim_inf = aux_data[r_inf + q]
+
+    return lim_sup, lim_inf
 
 
 def plot_pdf(mmcs, name):
@@ -87,7 +100,7 @@ def plot_pdf(mmcs, name):
     for i, data in enumerate(mmcs):
         ax = axes[i]
         ax.set_title(f"PDF {name[i]}")
-        inf, sup = limits(data)
+        inf, sup = limits(data, 0.95, len(data))
         ax.axvline(inf, 0, 1, linestyle='--', c='red')
         ax.axvline(sup, 0, 1, linestyle='--', c='red')
         ax.axvline(np.mean(data), 0, 1, linestyle='--', c='black')
@@ -113,7 +126,7 @@ def plot_cdf(mmcs, name):
 
 
 def info(data, name, p):
-    inf, sup = limits(data)
+    inf, sup = limits(data, p, len(data))
     print(f'''
         For MMC {name}:
         M = {m_factor(p)}
